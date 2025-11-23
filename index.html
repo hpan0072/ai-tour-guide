@@ -6,18 +6,17 @@
     <title>AI Tour Guide (Mobile Demo)</title>
     <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <style>
-        :root {
-            /* 全新可爱、简洁、平面插画风配色 */
-            --primary-color: #FF5656;    /* 强调色/按钮 */
-            --secondary-color: #FFA239;  /* 次要强调色 */
-            --tertiary-color: #8CE4FF;   /* 辅助色 */
-            --background-light: #FFF8DE; /* 浅黄背景 */
+        :root 
+            --primary-color: #FF5656;    /* button */
+            --secondary-color: #FFA239;  
+            --tertiary-color: #8CE4FF;  
+            --background-light: #FFF8DE; /* background */
             --text-dark: #333333;
             --text-light: #FFFFFF;
-            --accent-color: #FEEE91;     /* 亮黄/提示 */
+            --accent-color: #FEEE91;     /* note */
             --border-color: #E0E0E0;
             --radius-large: 15px;
-            --shadow-flat: 4px 4px 0px var(--text-dark); /* 平面插画风阴影 */
+            --shadow-flat: 4px 4px 0px var(--text-dark); /* shadow */
         }
 
         #welcomeMessage {
@@ -28,7 +27,7 @@
             border-radius: var(--radius-large);
             background-color: var(--tertiary-color);
             box-shadow: var(--shadow-flat);
-            font-size: 0.85rem; /* 提示词字号小一点 */
+            font-size: 0.85rem; 
             line-height: 1.6;
             white-space: pre-wrap;
         }
@@ -83,11 +82,11 @@
             display: flex;
             flex-direction: column;
             background-color: var(--text-light);
-            padding: 1.5rem; /* 增加内边距 */
-            border-radius: var(--radius-large); /* 大圆角 */
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); /* 柔和阴影 */
+            padding: 1.5rem; 
+            border-radius: var(--radius-large); 
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); 
             position: relative;
-            border: 2px solid var(--text-dark); /* 增加边框以配合插画风 */
+            border: 2px solid var(--text-dark); 
         }
 
         h1 {
@@ -122,8 +121,8 @@
         .controls button {
             width: 100%;
             padding: 0.8rem 1rem;
-            border-radius: var(--radius-large); /* 大圆角 */
-            border: 2px solid var(--text-dark); /* 边框 */
+            border-radius: var(--radius-large); 
+            border: 2px solid var(--text-dark); 
             font-size: 1rem;
             appearance: none;
             background-color: var(--text-light);
@@ -148,16 +147,16 @@
         }
 
         .controls button {
-            background-color: var(--primary-color); /* 强调色 */
+            background-color: var(--primary-color);
             color: var(--text-light);
             cursor: pointer;
             font-weight: bold;
-            border: 2px solid var(--text-dark); /* 边框 */
+            border: 2px solid var(--text-dark); 
             box-shadow: var(--shadow-flat);
         }
 
         .controls button:hover {
-            background-color: #E04444; /* 强调色变暗 */
+            background-color: #E04444; 
         }
 
         .controls button:active {
@@ -180,7 +179,7 @@
             border: 2px solid var(--text-dark);
             border-radius: var(--radius-large);
             text-align: left;
-            background-color: var(--accent-color); /* 亮黄背景 */
+            background-color: var(--accent-color); 
             white-space: pre-wrap;
             line-height: 1.6;
             font-size: 0.95rem;
@@ -227,7 +226,7 @@
             border: 1px solid var(--border-color);
         }
 
-        /* 响应式设计 */
+        /* Responsive design */
         @media (max-width: 480px) {
             h1 {
                 font-size: 1.5rem;
@@ -295,10 +294,10 @@
         // ============================================
         // 全局状态变量
         // ============================================
-        let currentLanguage = 'zh'; // 初始语言为中文
-const HUGGING_FACE_API_URL = 'YOUR_HUGGING_FACE_API_ENDPOINT_HERE'; // 请替换为你的 Hugging Face API 部署地址
+        let currentLanguage = 'en'; // The initial language is English
+const HUGGING_FACE_API_URL = 'YOUR_HUGGING_FACE_API_ENDPOINT_HERE'; // Please replace with your Hugging Face API deployment address
 
-// 4种系统语言：中文(zh), 英文(en), 法语(fr), 意大利语(it)
+//Four system languages: Chinese (zh), English (en), French (fr), and Italian (it)
 const SYSTEM_LANGUAGES = ['zh', 'en', 'fr', 'it'];
         let mapInstance = null;
         let currentMarker = null;
@@ -380,13 +379,12 @@ I know some of you might have little ones in tow—fantastic! Children often see
         };
 
         // ============================================
-        // 地点数据 (根据用户提供的表格数据更新)
+        // Location data (updated based on the table data provided by the user)
         // ============================================
-        // 4个系统：中文(zh), 英文(en), 法语(fr), 意大利语(it)
-        // 每个系统包含两个城市的地点。
+        // Four systems: Chinese (zh), English (en), French (fr), Italian (it)
         const LOCATIONS_MAP = {
             'zh': [
-                // 中国 - 西安 (Xi'an, China)
+                // Xi'an, China
                 { id: 'xian_bingmayong', name_zh: '兵马俑 (秦始皇陵兵马俑博物馆)', name_en: 'Emperor Qinshihuang\'s Mausoleum Site Museum', plusCode: '8P6R97MH+J9', lat: 34.3848, lon: 109.2734 },
                 { id: 'xian_dayanta', name_zh: '大雁塔', name_en: 'Giant Wild Goose Pagoda', plusCode: '8P6R6X97+M', lat: 34.2197, lon: 108.9594 },
                 { id: 'xian_chengqiang', name_zh: '西安城墙 (永宁门)', name_en: 'Xi\'an Wall Yongningmen', plusCode: '8P6R7W2W+QW', lat: 34.2659, lon: 108.9401 },
@@ -399,7 +397,7 @@ I know some of you might have little ones in tow—fantastic! Children often see
                 { id: 'xian_bowuguan', name_zh: '陕西历史博物馆', name_en: 'Shaanxi History Museum', plusCode: '8P6R6XF4+C4', lat: 34.2197, lon: 108.9594 }
             ],
             'en': [
-                // 澳大利亚 - 悉尼 (Sydney, Australia)
+                //Sydney, Australia
                 { id: 'sydney_qvb', name_zh: '维多利亚女王大厦', name_en: 'Queen Victoria Building (QVB)', plusCode: '4RRH+4M', lat: -33.8715, lon: 151.2069 },
                 { id: 'sydney_cat_crossing', name_zh: '萨里山猫咪十字路口', name_en: 'Surry Hills Cat Crossing', plusCode: '4RRH+67R', lat: -33.8845, lon: 151.2111 },
                 { id: 'sydney_harbour_bridge', name_zh: '海港大桥', name_en: 'Harbour Bridge', plusCode: '4RRH+6X38', lat: -33.8523, lon: 151.2108 },
@@ -411,7 +409,7 @@ I know some of you might have little ones in tow—fantastic! Children often see
                 { id: 'sydney_hyde_park', name_zh: '海德公园', name_en: 'Hyde Park', plusCode: '4RRH+46H6+9J', lat: -33.8732, lon: 151.2104 }
             ],
             'fr': [
-                // 法国 - 巴黎 (Paris, France)
+                // Paris, France
                 { id: 'paris_eiffel', name_zh: '埃菲尔铁塔', name_en: 'Eiffel Tower', plusCode: '8FW4V75V+8Q', lat: 48.8584, lon: 2.2945 },
                 { id: 'paris_louvre', name_zh: '卢浮宫', name_en: 'Musée du Louvre', plusCode: '8FW4V7JV+4X', lat: 48.8606, lon: 2.3376 },
                 { id: 'paris_notre_dame', name_zh: '巴黎圣母院', name_en: 'Cathédrale Notre-Dame de Paris', plusCode: '8FW4V7MX+HW', lat: 48.8530, lon: 2.3499 },
@@ -424,7 +422,7 @@ I know some of you might have little ones in tow—fantastic! Children often see
                 { id: 'paris_jardin_luxembourg', name_zh: '卢森堡公园', name_en: 'Luxembourg Gardens', plusCode: '8FW4V7MR+8P', lat: 48.8466, lon: 2.3377 }
             ],
             'it': [
-                // 意大利 - 罗马 (Rome, Italy)
+                // Rome, Italy
                 { id: 'rome_colosseo', name_zh: '古罗马斗兽场', name_en: 'Colosseo', plusCode: '8FHJVFRV+46', lat: 41.8902, lon: 12.4922 },
                 { id: 'rome_vatican_museums', name_zh: '梵蒂冈博物馆', name_en: 'Vatican Museums', plusCode: '8FH2VH8H+2Q', lat: 41.9065, lon: 12.4534 },
                 { id: 'rome_st_peters_basilica', name_zh: '圣彼得大教堂', name_en: 'St. Peter\'s Basilica', plusCode: '8FH2VH7H+3R', lat: 41.9022, lon: 12.4570 },
@@ -438,18 +436,15 @@ I know some of you might have little ones in tow—fantastic! Children often see
             ]
         };
 
-// ============================================
-        // 假数据存储 (已移除，使用 API 接口)
-        // ============================================
-        // 移除假数据，现在将直接调用 Hugging Face API
+        //  Hugging Face API
         const FAKE_TOUR_DESCRIPTIONS = {};
 
         // ============================================
-        // 获取 DOM 元素
+        // Obtain DOM 
         // ============================================
         const mainTitle = document.getElementById('mainTitle');
-        const languageSelect = document.getElementById('languageSelect'); // 更改为 select
-        const welcomeMessageDiv = document.getElementById('welcomeMessage'); // 新增欢迎信息
+        const languageSelect = document.getElementById('languageSelect'); // change to select
+        const welcomeMessageDiv = document.getElementById('welcomeMessage'); 
         const locationLabel = document.getElementById('locationLabel');
         const locationSelect = document.getElementById('location');
         const styleLabel = document.getElementById('styleLabel');
@@ -460,23 +455,23 @@ I know some of you might have little ones in tow—fantastic! Children often see
         const mapDiv = document.getElementById('map');
 
         // ============================================
-        // updateUI() 函数 - 根据语言更新界面
+        // updateUI() 
         // ============================================
         function updateUI() {
             const texts = TEXT_MAP[currentLanguage];
 
-            // 更新标题和标签
+            // title and tab
             mainTitle.textContent = texts.mainTitle;
             locationLabel.textContent = texts.locationLabel;
             welcomeMessageDiv.textContent = texts.welcomeMessage; // 更新欢迎信息
             
-            // 更新语言选择下拉菜单的选中项
+            // selected items in the language selection drop-down menu
             languageSelect.value = currentLanguage;
             styleLabel.textContent = texts.styleLabel;
             generateBtn.textContent = texts.generateButton;
             loadingDiv.textContent = texts.loadingText;
 
-            // 更新地点下拉菜单
+            // location drop-down menu
             const locations = LOCATIONS_MAP[currentLanguage] || []; // 使用新的 LOCATIONS_MAP
             locationSelect.innerHTML = '';
             locations.forEach(location => {
@@ -489,19 +484,19 @@ I know some of you might have little ones in tow—fantastic! Children often see
                 locationSelect.appendChild(option);
             });
 
-            // 更新风格选择器选项文本
+            // Interest selector option text
             const styleOptions = styleSelect.querySelectorAll('option');
             styleOptions.forEach(option => {
                 const styleKey = option.value;
                 option.textContent = texts.styleOptions[styleKey];
             });
 
-            // 更新初始描述
+            // initial description
             tourDescriptionDiv.textContent = texts.initialDescription;
         }
 
         // ============================================
-        // 初始化地图
+        // initial map
         // ============================================
         function initMap(lat, lon, locationName) {
             if (!mapInstance) {
@@ -514,18 +509,18 @@ I know some of you might have little ones in tow—fantastic! Children often see
                 mapInstance.setView([lat, lon], 13);
             }
 
-            // 移除旧标记
+            // old point
             if (currentMarker) {
                 mapInstance.removeLayer(currentMarker);
             }
 
-            // 添加新标记
+            // new point
             currentMarker = L.marker([lat, lon]).addTo(mapInstance);
             currentMarker.bindPopup(locationName).openPopup();
         }
 
         // ============================================
-        // 事件监听器 - 语言切换 (改为下拉菜单)
+        // Event Listener - Language Switch (Drop-down Menu)
         // ============================================
         languageSelect.addEventListener('change', (event) => {
             currentLanguage = event.target.value;
@@ -533,7 +528,7 @@ I know some of you might have little ones in tow—fantastic! Children often see
         });
 
         // ============================================
-        // 事件监听器 - 生成导游词
+        // Event Listener - Generate tour guide script
         // ============================================
         generateBtn.addEventListener('click', async () => {
             const locationId = locationSelect.value;
@@ -544,12 +539,12 @@ I know some of you might have little ones in tow—fantastic! Children often see
             const locationName = selectedOption.textContent;
             const style = styleSelect.value;
 
-            // 显示加载状态
+            // Display loading status
             loadingDiv.style.display = 'block';
             generateBtn.disabled = true;
             tourDescriptionDiv.textContent = '';
 
-            // 构建请求负载
+            // Build request payload
             const requestPayload = {
                 plus_code: plusCode,
                 interests: ['历史', '文化', '旅游'], // 示例兴趣标签
@@ -557,65 +552,60 @@ I know some of you might have little ones in tow—fantastic! Children often see
                 language: currentLanguage
             };
 
-            // ============================================
             // --- HUGGING FACE API INTEGRATION ---
-            // 你的队友已将 API 部署在 Hugging Face 上。
-            // 我们将使用 fetch API 调用该端点。
-            // ============================================
-
             let tourDescription = TEXT_MAP[currentLanguage].noFakeDescription;
 
             try {
                 if (!HUGGING_FACE_API_URL || HUGGING_FACE_API_URL === 'YOUR_HUGGING_FACE_API_ENDPOINT_HERE') {
-                    throw new Error('请在代码中设置 HUGGING_FACE_API_URL');
+                    throw new Error('Please set it in the code HUGGING_FACE_API_URL');
                 }
 
-                // 模拟网络请求延迟 (可以移除，但保留以提供更好的用户体验)
+                // Simulate network request latency (can be removed but retained to provide a better user experience)
                 await new Promise(resolve => setTimeout(resolve, 500));
 
                 const response = await fetch(HUGGING_FACE_API_URL, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        // 如果 Hugging Face API 需要认证，请在这里添加 Authorization 头
+                        // If Hugging Face API requires authentication, add the Authorization header here
                         // 'Authorization': 'Bearer YOUR_HF_TOKEN'
                     },
                     body: JSON.stringify(requestPayload)
                 });
 
                 if (!response.ok) {
-                    throw new Error(`API 请求失败，状态码: ${response.status}`);
+                    throw new Error(`API request failed.status code: ${response.status}`);
                 }
 
                 const data = await response.json();
 
-                // 假设 Hugging Face API 返回的 JSON 结构与原预留结构一致，包含一个 'response' 字段
+                // Suppose the JSON structure returned by the Hugging Face API is consistent with the original reserved structure and contains a 'response' field
                 tourDescription = data.response || data.generated_text || TEXT_MAP[currentLanguage].noFakeDescription;
 
             } catch (error) {
-                console.error('API 调用出错:', error);
+                console.error('API call error:', error);
                 tourDescription = `[ERROR] ${TEXT_MAP[currentLanguage].loadingText.replace('正在生成导游词...', '生成失败')}：${error.message}`;
             } finally {
-                // 隐藏加载状态
+                // Hide the loading state
                 loadingDiv.style.display = 'none';
                 generateBtn.disabled = false;
 
-                // 显示导游词
+                // Display the tour guide script
                 tourDescriptionDiv.textContent = tourDescription;
 
-                // 初始化地图
+                // Initialize the map
                 initMap(lat, lon, locationName);
             }
         });
 
         // ============================================
-        // 页面加载完成后初始化界面
+        // Initialize the interface after the page is loaded
         // ============================================
         function initializeLanguageSelect() {
             SYSTEM_LANGUAGES.forEach(lang => {
                 const option = document.createElement('option');
                 option.value = lang;
-                option.textContent = lang.toUpperCase(); // 仅显示语言代码，如 ZH, EN, FR, IT
+                option.textContent = lang.toUpperCase(); 
                 languageSelect.appendChild(option);
             });
             languageSelect.value = currentLanguage;
@@ -626,7 +616,7 @@ I know some of you might have little ones in tow—fantastic! Children often see
             updateUI();
         });
 
-        // 如果 DOM 已经加载，直接初始化
+        // If the DOM has already been loaded, initialize directly
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
                 initializeLanguageSelect();
