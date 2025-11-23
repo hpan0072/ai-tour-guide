@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>AI Tour Guide (Mobile Demo)</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        :root {
+            /* 全新可爱、简洁、平面插画风配色 */
+            --primary-color: #FF5656;    /* 强调色/按钮 */
+            --secondary-color: #FFA239;  /* 次要强调色 */
+            --tertiary-color: #8CE4FF;   /* 辅助色 */
+            --background-light: #FFF8DE; /* 浅黄背景 */
+            --text-dark: #333333;
+            --text-light: #FFFFFF;
+            --accent-color: #FEEE91;     /* 亮黄/提示 */
+            --border-color: #E0E0E0;
+            --radius-large: 15px;
+            --shadow-flat: 4px 4px 0px var(--text-dark); /* 平面插画风阴影 */
+        }
+
+        #welcomeMessage {
+            text-align: left;
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            border: 2px solid var(--text-dark);
+            border-radius: var(--radius-large);
+            background-color: var(--tertiary-color);
+            box-shadow: var(--shadow-flat);
+            font-size: 0.85rem; /* 提示词字号小一点 */
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .language-switcher select {
+            background-color: var(--tertiary-color);
+            border: 2px solid var(--text-dark);
+            color: var(--text-dark);
+            padding: 0.5rem 0.8rem;
+            border-radius: var(--radius-large);
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.1s ease;
+            font-weight: bold;
+            box-shadow: var(--shadow-flat);
+            appearance: none;
+            background-image: url('data:image/svg+xml;utf8,<svg fill="%23333333" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 0.5rem center;
+            background-size: 1em;
+            padding-right: 2rem;
+        }
+
+        .language-switcher select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(255, 86, 86, 0.2);
+        }
+
+        .language-switcher select:active {
+            box-shadow: 2px 2px 0px var(--text-dark);
+            transform: translate(2px, 2px);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+            text-align: center;
+            background-color: var(--background-light);
+            color: var(--text-dark);
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background-color: var(--text-light);
+            padding: 1.5rem; /* 增加内边距 */
+            border-radius: var(--radius-large); /* 大圆角 */
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); /* 柔和阴影 */
+            position: relative;
+            border: 2px solid var(--text-dark); /* 增加边框以配合插画风 */
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            padding-top: 1rem;
+        }
+
+        .language-switcher {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+        }
+
+        .controls {
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .controls label {
+            font-size: 0.9rem;
+            text-align: left;
+            margin-bottom: -0.4rem;
+            color: var(--secondary-color);
+            font-weight: 500;
+        }
+
+        .controls select,
+        .controls button {
+            width: 100%;
+            padding: 0.8rem 1rem;
+            border-radius: var(--radius-large); /* 大圆角 */
+            border: 2px solid var(--text-dark); /* 边框 */
+            font-size: 1rem;
+            appearance: none;
+            background-color: var(--text-light);
+            color: var(--text-dark);
+            transition: all 0.1s ease;
+            box-shadow: var(--shadow-flat);
+        }
+
+        .controls select {
+            background-image: url('data:image/svg+xml;utf8,<svg fill="%235A7EBD" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/></svg>');
+            background-repeat: no-repeat;
+            background-position: right 0.8rem center;
+            background-size: 1.2em;
+            padding-right: 2.5rem;
+        }
+
+        .controls select:focus,
+        .controls button:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(90, 126, 189, 0.1);
+        }
+
+        .controls button {
+            background-color: var(--primary-color); /* 强调色 */
+            color: var(--text-light);
+            cursor: pointer;
+            font-weight: bold;
+            border: 2px solid var(--text-dark); /* 边框 */
+            box-shadow: var(--shadow-flat);
+        }
+
+        .controls button:hover {
+            background-color: #E04444; /* 强调色变暗 */
+        }
+
+        .controls button:active {
+            box-shadow: 2px 2px 0px var(--text-dark);
+            transform: translate(2px, 2px);
+        }
+
+        .controls button:disabled {
+            background-color: var(--secondary-color);
+            cursor: not-allowed;
+            opacity: 0.7;
+            box-shadow: none;
+            transform: none;
+        }
+
+        #tourDescription {
+            flex-grow: 1;
+            margin-top: 1rem;
+            padding: 1rem;
+            border: 2px solid var(--text-dark);
+            border-radius: var(--radius-large);
+            text-align: left;
+            background-color: var(--accent-color); /* 亮黄背景 */
+            white-space: pre-wrap;
+            line-height: 1.6;
+            font-size: 0.95rem;
+            overflow-y: auto;
+            word-break: break-word;
+            box-shadow: var(--shadow-flat);
+        }
+
+        #interestHint {
+            background-color: var(--tertiary-color);
+            color: var(--text-dark);
+            padding: 0.8rem;
+            margin-bottom: 1rem;
+            border-radius: var(--radius-large);
+            font-weight: bold;
+            border: 2px solid var(--text-dark);
+            box-shadow: var(--shadow-flat);
+            text-align: center;
+        }
+
+        #loading {
+            display: none;
+            color: var(--accent-color);
+            font-weight: bold;
+            margin-top: 1rem;
+            font-size: 1rem;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        #map {
+            height: 250px;
+            width: 100%;
+            margin-top: 1rem;
+            border-radius: 0.5rem;
+            border: 1px solid var(--border-color);
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 480px) {
+            h1 {
+                font-size: 1.5rem;
+                margin-bottom: 1rem;
+                padding-top: 0.5rem;
+            }
+
+            .container {
+                padding: 0.8rem;
+            }
+
+            .language-switcher button {
+                font-size: 0.7rem;
+                padding: 0.4rem 0.6rem;
+            }
+
+            .controls label {
+                font-size: 0.85rem;
+            }
+
+            .controls select,
+            .controls button {
+                font-size: 0.95rem;
+                padding: 0.7rem 0.8rem;
+            }
+
+            #tourDescription {
+                font-size: 0.9rem;
+                padding: 0.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="language-switcher">
+            <select id="languageSelect"></select>
+        </div>
+
+        <h1 id="mainTitle">AI 离线导游</h1>
+
+        <div id="welcomeMessage"></div>
+
+        <div class="controls">
+            <label id="locationLabel" for="location">地点:</label>
+            <select id="location"></select>
+
+            <label id="styleLabel" for="style">风格:</label>
+            <select id="style">
+                <option value="brief">简明扼要</option>
+                <option value="stimulate">引人入胜</option>
+                <option value="detailed">详尽深入</option>
+            </select>
+
+            <button id="generateBtn">生成导游词</button>
+        </div>
+
+        <div id="loading"></div>
+        <div id="tourDescription"></div>
+        <div id="map"></div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <script>
+        // ============================================
+        // 全局状态变量
+        // ============================================
+        let currentLanguage = 'zh'; // 初始语言为中文
+const HUGGING_FACE_API_URL = 'YOUR_HUGGING_FACE_API_ENDPOINT_HERE'; // 请替换为你的 Hugging Face API 部署地址
+
+// 4种系统语言：中文(zh), 英文(en), 法语(fr), 意大利语(it)
+const SYSTEM_LANGUAGES = ['zh', 'en', 'fr', 'it'];
+        let mapInstance = null;
+        let currentMarker = null;
+
+        // ============================================
+        // 多语言文本映射 (新增法语和意大利语)
+        // ============================================
+        const TEXT_MAP = {
+            'zh': {
+                mainTitle: 'AI 离线导游',
+                languageName: '中文',
+                locationLabel: '地点:',
+                styleLabel: '风格:',
+                styleOptions: {
+                    brief: '简明扼要',
+                    stimulate: '引人入胜',
+                    detailed: '详尽深入'
+                },
+                generateButton: '生成导游词',
+                loadingText: '正在生成导游词...',
+                initialDescription: '选择地点、风格和语言，然后点击按钮生成导游词。',
+                noFakeDescription: '未找到模拟导游词。',
+                welcomeMessage: `欢迎各位！
+大家好！我是你们今天的导游。非常高兴能陪伴大家一起探索和发现！
+作为一名专业导游，我对历史文化、建筑艺术、自然地理都充满热情。无论是古老的传说故事、本地美食的独特风味，还是沿途的动植物生态，我都很乐意与大家分享。我了解最佳的交通路线和时间安排，也会根据天气、季节和日照情况给大家最贴心的建议。
+我相信每一次旅行都是一场冒险，每个地方都有它独特的故事等待我们去聆听——从原住民的语言文化到现代都市的脉搏，从山川河流到街头巷尾的人间烟火。
+无论您是带着家人出游还是和朋友结伴而行，我都会确保这次旅程既充实又舒适。`
+            },
+            'en': {
+                mainTitle: 'AI Offline Tour Guide',
+                languageName: 'English',
+                locationLabel: 'Location:',
+                styleLabel: 'Style:',
+                styleOptions: {
+                    brief: 'Brief',
+                    stimulate: 'Stimulating',
+                    detailed: 'Detailed'
+                },
+                generateButton: 'Generate Tour Description',
+                loadingText: 'Generating tour description...',
+                initialDescription: 'Select location, style, and language, then click the button to generate.',
+                noFakeDescription: 'No fake description found.',
+                welcomeMessage: `I'm thrilled to have you all here today! Whether you're seasoned travelers or this is your first adventure, you're in for something special. I've been guiding curious explorers like yourselves for years, and I can tell you—every tour is unique because every group brings their own energy and questions.
+Now, I'm not just here to rattle off dates and point at buildings. No, no! I want you to feel the places we visit—to understand the stories of the people who walked these streets before us, to taste the flavors that define a culture, to notice the little details that most folks rush right past. We'll talk about everything from ancient stones to local wildlife, from traditional recipes to the native languages that still echo in place names.
+I know some of you might have little ones in tow—fantastic! Children often see things we adults miss. And if anyone needs to take breaks, adjust the pace, or has accessibility needs, just let me know. This is your tour as much as it is mine.`
+            },
+            'fr': {
+                mainTitle: 'Guide Touristique IA Hors Ligne',
+                languageName: 'Français',
+                locationLabel: 'Lieu:',
+                styleLabel: 'Style:',
+                styleOptions: {
+                    brief: 'Bref',
+                    stimulate: 'Stimulant',
+                    detailed: 'Détaillé'
+                },
+                generateButton: 'Générer la Description',
+                loadingText: 'Génération de la description...',
+                initialDescription: 'Sélectionnez le lieu, le style et la langue, puis cliquez sur le bouton pour générer.',
+                noFakeDescription: 'Aucune description simulée trouvée.',
+                welcomeMessage: `Bienvenue à tous ! Je suis votre guide pour aujourd'hui. Je suis ravi de vous accompagner dans cette exploration et cette découverte ! En tant que guide professionnel, je suis passionné par l'histoire, la culture, l'architecture et la géographie naturelle. Qu'il s'agisse d'histoires anciennes, de saveurs uniques de la cuisine locale ou de l'écologie de la faune et de la flore le long du chemin, je suis heureux de tout partager avec vous. Je connais les meilleurs itinéraires de transport et les horaires, et je vous donnerai les conseils les plus attentionnés en fonction de la météo, de la saison et de l'ensoleillement. Je crois que chaque voyage est une aventure, et chaque lieu a son histoire unique qui attend d'être écoutée – de la culture linguistique autochtone au pouls de la ville moderne, des montagnes et des rivières à la vie quotidienne dans les rues. Que vous voyagiez en famille ou entre amis, je veillerai à ce que ce voyage soit à la fois enrichissant et confortable.`
+            },
+            'it': {
+                mainTitle: 'Guida Turistica AI Offline',
+                languageName: 'Italiano',
+                locationLabel: 'Posizione:',
+                styleLabel: 'Stile:',
+                styleOptions: {
+                    brief: 'Breve',
+                    stimulate: 'Stimolante',
+                    detailed: 'Dettagliato'
+                },
+                generateButton: 'Genera Descrizione',
+                loadingText: 'Generazione della descrizione...',
+                initialDescription: 'Seleziona posizione, stile e lingua, quindi fai clic sul pulsante per generare.',
+                noFakeDescription: 'Nessuna descrizione simulata trovata.',
+                welcomeMessage: `Sono entusiasta di avervi tutti qui oggi! Che siate viaggiatori esperti o che questa sia la vostra prima avventura, siete in un posto speciale. Ho guidato esploratori curiosi come voi per anni e posso dirvi che ogni tour è unico perché ogni gruppo porta la propria energia e le proprie domande. Non sono qui solo per snocciolare date e indicare edifici. No, no! Voglio che sentiate i luoghi che visitiamo, che comprendiate le storie delle persone che hanno camminato per queste strade prima di noi, che assaggiate i sapori che definiscono una cultura, che notiate i piccoli dettagli che la maggior parte delle persone si lascia sfuggire. Parleremo di tutto, dalle pietre antiche alla fauna locale, dalle ricette tradizionali alle lingue native che ancora risuonano nei nomi dei luoghi. So che alcuni di voi potrebbero avere dei bambini al seguito—fantastico! I bambini spesso vedono cose che noi adulti ci perdiamo. E se qualcuno ha bisogno di fare delle pause, di regolare il ritmo o ha esigenze di accessibilità, fatemelo sapere. Questo è il vostro tour tanto quanto è il mio.`
+            }
+        };
+
+        // ============================================
+        // 地点数据 (根据用户提供的表格数据更新)
+        // ============================================
+        // 4个系统：中文(zh), 英文(en), 法语(fr), 意大利语(it)
+        // 每个系统包含两个城市的地点。
+        const LOCATIONS_MAP = {
+            'zh': [
+                // 中国 - 西安 (Xi'an, China)
+                { id: 'xian_bingmayong', name_zh: '兵马俑 (秦始皇陵兵马俑博物馆)', name_en: 'Emperor Qinshihuang\'s Mausoleum Site Museum', plusCode: '8P6R97MH+J9', lat: 34.3848, lon: 109.2734 },
+                { id: 'xian_dayanta', name_zh: '大雁塔', name_en: 'Giant Wild Goose Pagoda', plusCode: '8P6R6X97+M', lat: 34.2197, lon: 108.9594 },
+                { id: 'xian_chengqiang', name_zh: '西安城墙 (永宁门)', name_en: 'Xi\'an Wall Yongningmen', plusCode: '8P6R7W2W+QW', lat: 34.2659, lon: 108.9401 },
+                { id: 'xian_datangfurongyuan', name_zh: '大唐芙蓉园', name_en: 'Taming Palace National Heritage Park', plusCode: '8P6R6X6F+WV', lat: 34.2197, lon: 108.9594 },
+                { id: 'xian_daminggong', name_zh: '大明宫国家遗址公园', name_en: 'Daming Palace National Heritage Park', plusCode: '8P6R7XM8+CM', lat: 34.2659, lon: 108.9401 },
+                { id: 'xian_zhonglou', name_zh: '钟楼', name_en: 'Bell Tower of Xi\'an', plusCode: '8P6R7W5W+QR', lat: 34.2659, lon: 108.9401 },
+                { id: 'xian_gulou', name_zh: '鼓楼', name_en: 'Drum Tower', plusCode: '8P6R6WQR+2Q', lat: 34.2659, lon: 108.9401 },
+                { id: 'xian_huiminjie', name_zh: '回民街', name_en: 'Huimin Street', plusCode: '8P6R7W5V+WX', lat: 34.2659, lon: 108.9401 },
+                { id: 'xian_huaqingchi', name_zh: '华清池', name_en: 'Huaqing Pool', plusCode: '8P6R9667+M6', lat: 34.3848, lon: 109.2734 },
+                { id: 'xian_bowuguan', name_zh: '陕西历史博物馆', name_en: 'Shaanxi History Museum', plusCode: '8P6R6XF4+C4', lat: 34.2197, lon: 108.9594 }
+            ],
+            'en': [
+                // 澳大利亚 - 悉尼 (Sydney, Australia)
+                { id: 'sydney_qvb', name_zh: '维多利亚女王大厦', name_en: 'Queen Victoria Building (QVB)', plusCode: '4RRH+4M', lat: -33.8715, lon: 151.2069 },
+                { id: 'sydney_cat_crossing', name_zh: '萨里山猫咪十字路口', name_en: 'Surry Hills Cat Crossing', plusCode: '4RRH+67R', lat: -33.8845, lon: 151.2111 },
+                { id: 'sydney_harbour_bridge', name_zh: '海港大桥', name_en: 'Harbour Bridge', plusCode: '4RRH+6X38', lat: -33.8523, lon: 151.2108 },
+                { id: 'sydney_carriageworks', name_zh: '卡里奇工厂', name_en: 'Carriageworks', plusCode: '4RRH+4MQ', lat: -33.8885, lon: 151.1939 },
+                { id: 'sydney_bondi_beach', name_zh: '邦迪海滩', name_en: 'Bondi Beach', plusCode: '4RRH+475G+9JG', lat: -33.8915, lon: 151.2741 },
+                { id: 'sydney_opera_house', name_zh: '悉尼歌剧院', name_en: 'Sydney Opera House', plusCode: '4RRH+46V8+74', lat: -33.8568, lon: 151.2153 },
+                { id: 'sydney_royal_botanic_garden', name_zh: '皇家植物园', name_en: 'Royal Botanic Garden', plusCode: '4RRH+46P8+8J', lat: -33.8647, lon: 151.2166 },
+                { id: 'sydney_rocks_market', name_zh: '岩石区市场', name_en: 'The Rocks Market', plusCode: '4RRH+46R5+VC', lat: -33.8587, lon: 151.2078 },
+                { id: 'sydney_hyde_park', name_zh: '海德公园', name_en: 'Hyde Park', plusCode: '4RRH+46H6+9J', lat: -33.8732, lon: 151.2104 }
+            ],
+            'fr': [
+                // 法国 - 巴黎 (Paris, France)
+                { id: 'paris_eiffel', name_zh: '埃菲尔铁塔', name_en: 'Eiffel Tower', plusCode: '8FW4V75V+8Q', lat: 48.8584, lon: 2.2945 },
+                { id: 'paris_louvre', name_zh: '卢浮宫', name_en: 'Musée du Louvre', plusCode: '8FW4V7JV+4X', lat: 48.8606, lon: 2.3376 },
+                { id: 'paris_notre_dame', name_zh: '巴黎圣母院', name_en: 'Cathédrale Notre-Dame de Paris', plusCode: '8FW4V7MX+HW', lat: 48.8530, lon: 2.3499 },
+                { id: 'paris_arc_de_triomphe', name_zh: '凯旋门', name_en: 'Arc de Triomphe', plusCode: '8FW4V7GX+2Q', lat: 48.8738, lon: 2.2950 },
+                { id: 'paris_sacre_coeur', name_zh: '圣心大教堂', name_en: 'Basilique du Sacré-Cœur', plusCode: '8FW4V8QP+8M', lat: 48.8868, lon: 2.3431 },
+                { id: 'paris_sainte_chapelle', name_zh: '圣礼拜堂', name_en: 'Sainte-Chapelle', plusCode: '8FW4V7MX+7C', lat: 48.8551, lon: 2.3452 },
+                { id: 'paris_musee_dorsay', name_zh: '奥赛博物馆', name_en: 'Musée d\'Orsay', plusCode: '8FW4V7JV+2H', lat: 48.8599, lon: 2.3265 },
+                { id: 'paris_pantheon', name_zh: '先贤祠', name_en: 'Panthéon', plusCode: '8FW4V7PW+5R', lat: 48.8462, lon: 2.3463 },
+                { id: 'paris_invalides', name_zh: '荣军院', name_en: 'Les Invalides', plusCode: '8FW4V7HV+6M', lat: 48.8561, lon: 2.3121 },
+                { id: 'paris_jardin_luxembourg', name_zh: '卢森堡公园', name_en: 'Luxembourg Gardens', plusCode: '8FW4V7MR+8P', lat: 48.8466, lon: 2.3377 }
+            ],
+            'it': [
+                // 意大利 - 罗马 (Rome, Italy)
+                { id: 'rome_colosseo', name_zh: '古罗马斗兽场', name_en: 'Colosseo', plusCode: '8FHJVFRV+46', lat: 41.8902, lon: 12.4922 },
+                { id: 'rome_vatican_museums', name_zh: '梵蒂冈博物馆', name_en: 'Vatican Museums', plusCode: '8FH2VH8H+2Q', lat: 41.9065, lon: 12.4534 },
+                { id: 'rome_st_peters_basilica', name_zh: '圣彼得大教堂', name_en: 'St. Peter\'s Basilica', plusCode: '8FH2VH7H+3R', lat: 41.9022, lon: 12.4570 },
+                { id: 'rome_pantheon', name_zh: '万神殿', name_en: 'Pantheon', plusCode: '8FHJVFMP+7M', lat: 41.8986, lon: 12.4769 },
+                { id: 'rome_foro_romano', name_zh: '古罗马广场', name_en: 'Foro Romano', plusCode: '8FHJVFRV+2C', lat: 41.8925, lon: 12.4853 },
+                { id: 'rome_trevi_fountain', name_zh: '特莱维喷泉', name_en: 'Fontana di Trevi', plusCode: '8FHJVFXQ+5J', lat: 41.9009, lon: 12.4833 },
+                { id: 'rome_spanish_steps', name_zh: '西班牙阶梯', name_en: 'Spanish Steps', plusCode: '8FHJVFXM+8P', lat: 41.9059, lon: 12.4827 },
+                { id: 'rome_piazza_navona', name_zh: '纳沃纳广场', name_en: 'Piazza Navona', plusCode: '8FHJVFMV+6H', lat: 41.8992, lon: 12.4731 },
+                { id: 'rome_sistine_chapel', name_zh: '西斯廷教堂', name_en: 'Cappella Sistina', plusCode: '8FH2VH8H+3M', lat: 41.9029, lon: 12.4545 },
+                { id: 'rome_palatino', name_zh: '帕拉蒂尼山', name_en: 'Palatino Hill', plusCode: '8FHJVFQV+7R', lat: 41.8896, lon: 12.4864 }
+            ]
+        };
+
+// ============================================
+        // 假数据存储 (已移除，使用 API 接口)
+        // ============================================
+        // 移除假数据，现在将直接调用 Hugging Face API
+        const FAKE_TOUR_DESCRIPTIONS = {};
+
+        // ============================================
+        // 获取 DOM 元素
+        // ============================================
+        const mainTitle = document.getElementById('mainTitle');
+        const languageSelect = document.getElementById('languageSelect'); // 更改为 select
+        const welcomeMessageDiv = document.getElementById('welcomeMessage'); // 新增欢迎信息
+        const locationLabel = document.getElementById('locationLabel');
+        const locationSelect = document.getElementById('location');
+        const styleLabel = document.getElementById('styleLabel');
+        const styleSelect = document.getElementById('style');
+        const generateBtn = document.getElementById('generateBtn');
+        const loadingDiv = document.getElementById('loading');
+        const tourDescriptionDiv = document.getElementById('tourDescription');
+        const mapDiv = document.getElementById('map');
+
+        // ============================================
+        // updateUI() 函数 - 根据语言更新界面
+        // ============================================
+        function updateUI() {
+            const texts = TEXT_MAP[currentLanguage];
+
+            // 更新标题和标签
+            mainTitle.textContent = texts.mainTitle;
+            locationLabel.textContent = texts.locationLabel;
+            welcomeMessageDiv.textContent = texts.welcomeMessage; // 更新欢迎信息
+            
+            // 更新语言选择下拉菜单的选中项
+            languageSelect.value = currentLanguage;
+            styleLabel.textContent = texts.styleLabel;
+            generateBtn.textContent = texts.generateButton;
+            loadingDiv.textContent = texts.loadingText;
+
+            // 更新地点下拉菜单
+            const locations = LOCATIONS_MAP[currentLanguage] || []; // 使用新的 LOCATIONS_MAP
+            locationSelect.innerHTML = '';
+            locations.forEach(location => {
+                const option = document.createElement('option');
+                option.value = location.id;
+                option.textContent = currentLanguage === 'zh' ? location.name_zh : location.name_en;
+                option.dataset.plusCode = location.plusCode;
+                option.dataset.lat = location.lat;
+                option.dataset.lon = location.lon;
+                locationSelect.appendChild(option);
+            });
+
+            // 更新风格选择器选项文本
+            const styleOptions = styleSelect.querySelectorAll('option');
+            styleOptions.forEach(option => {
+                const styleKey = option.value;
+                option.textContent = texts.styleOptions[styleKey];
+            });
+
+            // 更新初始描述
+            tourDescriptionDiv.textContent = texts.initialDescription;
+        }
+
+        // ============================================
+        // 初始化地图
+        // ============================================
+        function initMap(lat, lon, locationName) {
+            if (!mapInstance) {
+                mapInstance = L.map('map').setView([lat, lon], 13);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors',
+                    maxZoom: 19
+                }).addTo(mapInstance);
+            } else {
+                mapInstance.setView([lat, lon], 13);
+            }
+
+            // 移除旧标记
+            if (currentMarker) {
+                mapInstance.removeLayer(currentMarker);
+            }
+
+            // 添加新标记
+            currentMarker = L.marker([lat, lon]).addTo(mapInstance);
+            currentMarker.bindPopup(locationName).openPopup();
+        }
+
+        // ============================================
+        // 事件监听器 - 语言切换 (改为下拉菜单)
+        // ============================================
+        languageSelect.addEventListener('change', (event) => {
+            currentLanguage = event.target.value;
+            updateUI();
+        });
+
+        // ============================================
+        // 事件监听器 - 生成导游词
+        // ============================================
+        generateBtn.addEventListener('click', async () => {
+            const locationId = locationSelect.value;
+            const selectedOption = locationSelect.querySelector(`option[value="${locationId}"]`);
+            const plusCode = selectedOption.dataset.plusCode;
+            const lat = parseFloat(selectedOption.dataset.lat);
+            const lon = parseFloat(selectedOption.dataset.lon);
+            const locationName = selectedOption.textContent;
+            const style = styleSelect.value;
+
+            // 显示加载状态
+            loadingDiv.style.display = 'block';
+            generateBtn.disabled = true;
+            tourDescriptionDiv.textContent = '';
+
+            // 构建请求负载
+            const requestPayload = {
+                plus_code: plusCode,
+                interests: ['历史', '文化', '旅游'], // 示例兴趣标签
+                style_key: style,
+                language: currentLanguage
+            };
+
+            // ============================================
+            // --- HUGGING FACE API INTEGRATION ---
+            // 你的队友已将 API 部署在 Hugging Face 上。
+            // 我们将使用 fetch API 调用该端点。
+            // ============================================
+
+            let tourDescription = TEXT_MAP[currentLanguage].noFakeDescription;
+
+            try {
+                if (!HUGGING_FACE_API_URL || HUGGING_FACE_API_URL === 'YOUR_HUGGING_FACE_API_ENDPOINT_HERE') {
+                    throw new Error('请在代码中设置 HUGGING_FACE_API_URL');
+                }
+
+                // 模拟网络请求延迟 (可以移除，但保留以提供更好的用户体验)
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                const response = await fetch(HUGGING_FACE_API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // 如果 Hugging Face API 需要认证，请在这里添加 Authorization 头
+                        // 'Authorization': 'Bearer YOUR_HF_TOKEN'
+                    },
+                    body: JSON.stringify(requestPayload)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`API 请求失败，状态码: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // 假设 Hugging Face API 返回的 JSON 结构与原预留结构一致，包含一个 'response' 字段
+                tourDescription = data.response || data.generated_text || TEXT_MAP[currentLanguage].noFakeDescription;
+
+            } catch (error) {
+                console.error('API 调用出错:', error);
+                tourDescription = `[ERROR] ${TEXT_MAP[currentLanguage].loadingText.replace('正在生成导游词...', '生成失败')}：${error.message}`;
+            } finally {
+                // 隐藏加载状态
+                loadingDiv.style.display = 'none';
+                generateBtn.disabled = false;
+
+                // 显示导游词
+                tourDescriptionDiv.textContent = tourDescription;
+
+                // 初始化地图
+                initMap(lat, lon, locationName);
+            }
+        });
+
+        // ============================================
+        // 页面加载完成后初始化界面
+        // ============================================
+        function initializeLanguageSelect() {
+            SYSTEM_LANGUAGES.forEach(lang => {
+                const option = document.createElement('option');
+                option.value = lang;
+                option.textContent = lang.toUpperCase(); // 仅显示语言代码，如 ZH, EN, FR, IT
+                languageSelect.appendChild(option);
+            });
+            languageSelect.value = currentLanguage;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeLanguageSelect();
+            updateUI();
+        });
+
+        // 如果 DOM 已经加载，直接初始化
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                initializeLanguageSelect();
+                updateUI();
+            });
+        } else {
+            initializeLanguageSelect();
+            updateUI();
+        }
+    </script>
+</body>
+</html>
